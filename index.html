@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FightSync AI — 3D Edition</title>
+    <meta name="description" content="FightSync AI 3D — a cinematic browser-based 3D fighting game powered by Three.js with adaptive AI, Tekken-style realism and Street Fighter impact effects." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- ══════════════ CHARACTER SELECT ══════════════ -->
+    <div id="screen-select" class="screen active">
+        <div class="select-bg-anim" aria-hidden="true"></div>
+        <div class="select-content">
+            <div class="title-logo">
+                <span class="logo-fight">FIGHT</span><span class="logo-sync">SYNC</span>
+                <span class="logo-ai">AI</span>
+                <span class="logo-3d">3D</span>
+            </div>
+            <p class="title-tagline">ADAPTIVE COMBAT INTELLIGENCE — NEURAL EDITION</p>
+
+            <div class="name-entry">
+                <label for="nameInput" class="entry-label">FIGHTER NAME</label>
+                <input id="nameInput" class="name-input" type="text" maxlength="12" placeholder="FIGHTER" autocomplete="off" spellcheck="false" />
+            </div>
+
+            <p class="char-select-title">SELECT YOUR FIGHTER</p>
+            <div class="char-grid" id="charGrid">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="select-btns">
+                <button id="startBtn" class="btn-primary" disabled>ENTER THE ARENA</button>
+                <button id="lbBtn" class="btn-ghost">🏆 LEADERBOARD</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ LEVEL INTRO SCREEN ══════════════ -->
+    <div id="screen-level" class="screen">
+        <div class="level-bg-num" id="lvlBigNum">1</div>
+        <span class="stage-label">STAGE</span>
+        <h2 class="level-name" id="lvlName">CYBERPUNK DISTRICT</h2>
+        <p class="level-flavor" id="lvlFlavor">THE AI IS LEARNING...</p>
+        <div class="round-badges" id="roundBadges">
+            <div class="round-badge" id="rb0"></div>
+            <div class="round-badge" id="rb1"></div>
+            <div class="round-badge" id="rb2"></div>
+        </div>
+        <div class="ai-cards" id="aiCards">
+            <div class="ai-card">
+                <div class="ai-card-val" id="statAgg">20%</div>
+                <div class="ai-card-lbl">AGGRESSION</div>
+            </div>
+            <div class="ai-card">
+                <div class="ai-card-val" id="statBlock">15%</div>
+                <div class="ai-card-lbl">BLOCK RATE</div>
+            </div>
+            <div class="ai-card">
+                <div class="ai-card-val" id="statSpeed">1.0×</div>
+                <div class="ai-card-lbl">SPEED</div>
+            </div>
+            <div class="ai-card">
+                <div class="ai-card-val" id="statCombo">0%</div>
+                <div class="ai-card-lbl">COMBO CHANCE</div>
+            </div>
+        </div>
+        <div class="countdown-wrap">
+            <div class="countdown" id="countdown">READY</div>
+        </div>
+    </div>
+
+    <!-- ══════════════ GAME SCREEN ══════════════ -->
+    <div id="screen-game" class="screen">
+
+        <!-- TOP HUD -->
+        <div id="hud">
+            <div class="hud-side hud-left">
+                <span class="hud-name" id="p1Name">PLAYER</span>
+                <div class="hp-track">
+                    <!-- Ghost bar (delayed drain indicator) -->
+                    <div class="hp-ghost" id="p1HpGhost"></div>
+                    <div class="hp-fill hp-fill--player" id="p1HpFill"></div>
+                </div>
+                <span class="hp-num" id="p1HpNum">100</span>
+            </div>
+            <div class="hud-center">
+                <div class="round-pips" id="roundPips">
+                    <div class="pip" id="pip-p1-0"></div>
+                    <div class="pip" id="pip-p1-1"></div>
+                    <div class="pip active" id="pip-vs">VS</div>
+                    <div class="pip" id="pip-ai-0"></div>
+                    <div class="pip" id="pip-ai-1"></div>
+                </div>
+                <div class="timer" id="roundTimer">60</div>
+                <div class="level-badge" id="levelBadge">LV 1</div>
+                <div class="score-display" id="scoreDisplay">0 PTS</div>
+            </div>
+            <div class="hud-side hud-right">
+                <span class="hp-num" id="aiHpNum">100</span>
+                <div class="hp-track">
+                    <!-- Ghost bar -->
+                    <div class="hp-ghost hp-ghost--right" id="aiHpGhost"></div>
+                    <div class="hp-fill hp-fill--ai" id="aiHpFill"></div>
+                </div>
+                <span class="hud-name hud-name--ai" id="aiName">AI-01</span>
+            </div>
+        </div>
+
+        <!-- 3D ARENA (Three.js renders here) -->
+        <div class="arena-wrap" id="arenaWrap">
+            <canvas id="arenaCanvas"></canvas>
+
+            <!-- DOM screen flash overlay -->
+            <div id="hitFlash"></div>
+
+            <!-- FIGHT! Banner -->
+            <div id="fightBanner" class="fight-banner hidden">FIGHT!</div>
+
+
+
+            <!-- Round Win Banner -->
+            <div id="roundWinBanner" class="round-win-banner hidden"></div>
+
+            <!-- Round-end overlay -->
+            <div id="roundEnd" class="round-end hidden">
+                <div class="round-end-inner">
+                    <div class="round-end-text" id="roundEndText">YOU WIN!</div>
+                    <div class="round-end-score" id="roundEndScore">0 PTS</div>
+                    <div class="round-end-btns">
+                        <button id="nextLvlBtn" class="btn-primary">NEXT LEVEL ▶</button>
+                        <button id="viewResBtn" class="btn-ghost">VIEW RESULTS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMBO DISPLAY -->
+        <div id="comboDisplay" class="combo-display hidden">
+            <span id="comboHits">2</span><span class="combo-label" id="comboLabel">COMBO!</span>
+        </div>
+
+        <!-- SYNC METER -->
+        <div id="syncRow">
+            <span class="sync-lbl">SYNC</span>
+            <div id="syncTrack">
+                <div id="syncFill"></div>
+            </div>
+            <span id="syncStatus">BALANCED</span>
+        </div>
+
+        <!-- CONTROLS BAR -->
+        <div id="controlsBar">
+            <span><kbd>A</kbd><kbd>D</kbd> Move</span>
+            <span><kbd>SPC</kbd> Jump</span>
+            <span><kbd>J</kbd> Punch</span>
+            <span><kbd>K</kbd> Kick</span>
+            <span><kbd>L</kbd> Block</span>
+            <span class="ctrl-combo"><kbd>J</kbd>+<kbd>K</kbd> Combo</span>
+            <span><kbd>ESC</kbd> Pause</span>
+            <button id="dsToggle" class="ds-toggle-btn">&#9679; DS MODE</button>
+        </div>
+
+        <!-- ══════ DATA SCIENCE PANEL ══════ -->
+        <div id="ds-panel" class="ds-panel hidden">
+          <div class="ds-header">
+            <div class="ds-title">&#9679; DATA SCIENCE ENGINE — LIVE</div>
+            <div class="ds-tabs">
+              <button class="ds-tab active" data-tab="rl">Q-LEARNING</button>
+              <button class="ds-tab" data-tab="markov">MARKOV</button>
+              <button class="ds-tab" data-tab="bayes">NAIVE BAYES</button>
+              <button class="ds-tab" data-tab="stats">STATISTICS</button>
+            </div>
+          </div>
+          <!-- Q-Learning tab -->
+          <div id="ds-tab-rl" class="ds-tabcontent"><div id="ds-rl-content" class="ds-loading">AWAITING DATA...</div></div>
+          <!-- Markov tab -->
+          <div id="ds-tab-markov" class="ds-tabcontent hidden"><div id="ds-markov-content" class="ds-loading">AWAITING DATA...</div></div>
+          <!-- Bayes tab -->
+          <div id="ds-tab-bayes" class="ds-tabcontent hidden"><div id="ds-bayes-content" class="ds-loading">AWAITING DATA...</div></div>
+          <!-- Stats tab -->
+          <div id="ds-tab-stats" class="ds-tabcontent hidden"><div id="ds-stats-content" class="ds-loading">AWAITING DATA...</div></div>
+        </div>
+    </div>
+
+    <!-- ══════════════ RESULT SCREEN ══════════════ -->
+    <div id="screen-result" class="screen">
+        <div class="result-card">
+            <div class="result-new-score hidden" id="newScoreBadge">🏆 NEW HIGH SCORE!</div>
+            <h2 class="result-headline" id="resultHeadline">VICTORY</h2>
+            <p class="result-sub" id="resultSub">ROUND COMPLETE</p>
+            <div class="result-grid">
+                <div class="result-cell">
+                    <div class="result-val" id="rs-dmg">0</div>
+                    <div class="result-lbl">DAMAGE DEALT</div>
+                </div>
+                <div class="result-cell">
+                    <div class="result-val" id="rs-score">0</div>
+                    <div class="result-lbl">TOTAL SCORE</div>
+                </div>
+                <div class="result-cell">
+                    <div class="result-val" id="rs-lvl">1</div>
+                    <div class="result-lbl">LEVEL REACHED</div>
+                </div>
+                <div class="result-cell">
+                    <div class="result-val" id="rs-combo">0</div>
+                    <div class="result-lbl">MAX COMBO</div>
+                </div>
+            </div>
+            <div class="result-btns">
+                <button id="resNextBtn" class="btn-primary">NEXT LEVEL ▶</button>
+                <button id="resRestartBtn" class="btn-ghost">↩ RESTART</button>
+                <button id="resLbBtn" class="btn-ghost">🏆 SCORES</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ LEADERBOARD SCREEN ══════════════ -->
+    <div id="screen-lb" class="screen">
+        <h2 class="lb-title">🏆 LEADERBOARD</h2>
+        <p class="lb-sub">TOP FIGHTERS</p>
+        <div id="lbTable" class="lb-table"></div>
+        <button id="lbBackBtn" class="btn-ghost lb-back">← BACK</button>
+    </div>
+
+    <!-- ══════════════ PAUSE SCREEN ══════════════ -->
+    <div id="screen-pause" class="screen">
+        <div class="pause-card">
+            <div class="pause-title">PAUSED</div>
+            <button id="resumeBtn" class="btn-primary">▶ RESUME</button>
+            <button id="pauseRestartBtn" class="btn-ghost">↩ RESTART</button>
+            <button id="pauseQuitBtn" class="btn-ghost">⬛ MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Data Science Modules (load before game modules) -->
+    <script src="ds_engine.js"></script>
+    <script src="ds_viz.js"></script>
+
+    <!-- Game Modules (in order) -->
+    <script src="audio.js"></script>
+    <script src="scene.js"></script>
+    <script src="fighter.js"></script>
+    <script src="ai.js"></script>
+    <script src="ui.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>
