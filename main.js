@@ -101,6 +101,7 @@ const Game = (() => {
 
   // ─── INPUT ──────────────────────────────────────────────
   function onKeyDown(e) {
+    const alreadyPressed = keys[e.code];
     keys[e.code] = true;
 
     if (e.code === 'Escape') {
@@ -110,7 +111,7 @@ const Game = (() => {
       }
     }
 
-    if (!gameRunning || roundOver || paused || !p1) return;
+    if (!gameRunning || roundOver || paused || !p1 || alreadyPressed) return;
 
     if (e.code === 'Space') {
       e.preventDefault();
