@@ -311,7 +311,12 @@ const UI = (() => {
 
   // ─── LEADERBOARD ─────────────────────────────────────────
   function getLB() {
-    try { return JSON.parse(localStorage.getItem('fs3d_lb') || '[]'); } catch { return []; }
+    try {
+      const saved = JSON.parse(localStorage.getItem('fs3d_lb') || '[]');
+      if (!Array.isArray(saved)) return [];
+      return saved.filter(entry => entry && typeof entry.name === 'string'
+        && Number.isFinite(entry.score) && Number.isFinite(entry.level));
+    } catch { return []; }
   }
 
   function escapeHTML(value) {
