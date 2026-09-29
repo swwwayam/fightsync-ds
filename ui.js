@@ -334,7 +334,7 @@ const UI = (() => {
     lb.push({ name, score, level: lvl });
     lb.sort((a, b) => b.score - a.score);
     lb.splice(10);
-    localStorage.setItem('fs3d_lb', JSON.stringify(lb));
+    try { localStorage.setItem('fs3d_lb', JSON.stringify(lb)); } catch { /* Scores remain unavailable when storage is blocked. */ }
     return lb.findIndex(e => e.name === name && e.score === score && e.level === lvl);
   }
 
