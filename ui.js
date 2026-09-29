@@ -314,6 +314,16 @@ const UI = (() => {
     try { return JSON.parse(localStorage.getItem('fs3d_lb') || '[]'); } catch { return []; }
   }
 
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    })[char]);
+  }
+
   function saveScore(name, score, lvl) {
     const lb = getLB();
     lb.push({ name, score, level: lvl });
@@ -335,7 +345,7 @@ const UI = (() => {
     el.innerHTML = lb.map((e, i) => `
       <div class="lb-row ${i < 3 ? 'gold-row' : ''}">
         <div class="lb-rank ${rankCls(i)}">${rankIcon(i)}</div>
-        <div class="lb-name">${e.name}</div>
+        <div class="lb-name">${escapeHTML(e.name)}</div>
         <div class="lb-score">${e.score.toLocaleString()}</div>
         <div class="lb-lvl">LV${e.level}</div>
       </div>`
