@@ -80,7 +80,7 @@ const Game = (() => {
       UI.showScreen('lb');
     });
     document.getElementById('nameInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') onStartGame();
+      if (e.key === 'Enter' && !document.getElementById('startBtn').disabled) onStartGame();
     });
 
     document.getElementById('nextLvlBtn').addEventListener('click', doNextLevel);
