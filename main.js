@@ -59,6 +59,7 @@ const Game = (() => {
     UI.buildCharSelect(idx => { playerCharIdx = idx; });
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup',   onKeyUp);
+    window.addEventListener('blur', clearHeldKeys);
     window.addEventListener('resize', Scene.resize);
     
     DSEngine.init();
@@ -104,6 +105,10 @@ const Game = (() => {
     const alreadyPressed = keys[e.code];
     keys[e.code] = true;
 
+    if (gameRunning && ['Space', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+      e.preventDefault();
+    }
+
     if (e.code === 'Escape') {
       if (gameRunning && !roundOver) {
         paused ? resumeGame() : pauseGame();
@@ -143,6 +148,11 @@ const Game = (() => {
   function onKeyUp(e) {
     keys[e.code] = false;
     if (e.code === 'KeyL' && p1) p1.stopBlock();
+  }
+
+  function clearHeldKeys() {
+    Object.keys(keys).forEach(code => { keys[code] = false; });
+    if (p1) p1.stopBlock();
   }
 
   // ─── START GAME ─────────────────────────────────────────
