@@ -60,6 +60,7 @@ const Game = (() => {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup',   onKeyUp);
     window.addEventListener('blur', clearHeldKeys);
+    document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('resize', Scene.resize);
     
     DSEngine.init();
@@ -153,6 +154,13 @@ const Game = (() => {
   function clearHeldKeys() {
     Object.keys(keys).forEach(code => { keys[code] = false; });
     if (p1) p1.stopBlock();
+  }
+
+  function onVisibilityChange() {
+    if (document.hidden && gameRunning && !roundOver && !paused) {
+      clearHeldKeys();
+      pauseGame();
+    }
   }
 
   // ─── START GAME ─────────────────────────────────────────
